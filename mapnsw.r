@@ -6,7 +6,7 @@ library(stringr)
 library(data.table)
 library(readr)
 library(lubridate)
-#library(htmlwidgets) - for exporting htmlwidget
+library(htmlwidgets) -
 
 setwd("~/Documents/NSW Covid/NSW/data")
 
@@ -38,6 +38,7 @@ names(x1) <- c("LGA")
 x2 <- filter(data, date == max(data$date)) #taking TR data for most recent date 
 choroData <- left_join(x1,x2) #append test rate data in the same LGA order as the spdf variable
 
+#hovertext
 hovertext <- paste(
   "LGA: ", choroData$LGA,"<br/>", 
   "Testing Rate (per 1000 population): ", choroData$TR, "<br/>", 
@@ -47,14 +48,22 @@ hovertext <- paste(
   sep="") %>%
   lapply(htmltools::HTML)
 
+#colour scale
+binpal <- colorBin("BuPu", choroData$TR,9)
+
 #plot LGA boundaries on world map
 m <- leaflet() %>% 
   addTiles() %>% 
   addPolygons(data = subset,
               weight = 2,
+              stroke = TRUE, 
+              color = "#444444",
+              fillOpacity = 1,
+              fillColor = ~binpal(choroData$TR),
               label = hovertext,
               labelOptions = labelOptions( 
                 style = list("font-weight" = "normal", padding = "3px 8px"), 
                 textsize = "13px", 
                 direction = "auto"
-              ))
+              )) %>%
+  addLegend(pal = binpal, values = choroData$TR, opacity=0.9, title = "Testing Rates (per 1000 population)", position = "bottomright")
